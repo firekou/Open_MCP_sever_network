@@ -27,7 +27,7 @@ AI Token King 開源獲客基礎設施的 **Execution 節點**。
 
 | | 目錄 | 規則的家 |
 |---|---|---|
-| **接入**別人的 MCP | `catalog/`、`docs/cloud-deployment-mcp.md`、`.mcp.json.example` | `catalog/README.md` 的三級分類 |
+| **接入**別人的 MCP | `catalog/`、`skills/`、`docs/cloud-deployment-mcp.md`、`.mcp.json.example` | `catalog/README.md` 的三級分類 |
 | **發布**我方的 MCP | `strategy/`、（未來的 `servers/`） | `POLICY.md` 的十條不變量 |
 
 入口是 `strategy/00-overview.md`，判準是 `strategy/01-extraction-criteria.md`，
@@ -46,6 +46,8 @@ AI Token King 開源獲客基礎設施的 **Execution 節點**。
 3. **`catalog/*.yaml` 的每條事實都要附 `verified_at` 與 `source`。**
    查不到就進 `gaps` 寫出來，不要留白也不要猜 ——
    目前 E2B 的工具清單、Azure 的工具清單就是這樣留空的。
+   **`skills/` 是 `catalog/` 的產物**：新增一個平台契約就要更新 skill，
+   `check_catalog.py` 會擋（少一個平台的作業指導書，讀起來跟完整的一模一樣）。
 4. **`strategy/source/` 是原稿不是產物，逐字不改。**
    要修正判斷，改 `00`／`01`，把原文留著。
    **原稿與產物說的不一樣時，錯的是產物** —— 但原稿不因此被改掉。

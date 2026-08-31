@@ -6,8 +6,8 @@
 
 它做兩件事：
 
-1. **接入** —— 一份查證過的 MCP server 目錄，讓 agent 有能力**把東西部署上線**：
-   AI Token King（預設模型閘道）＋ AWS／GCP／Azure／Railway／Vercel／E2B／TiDB。
+1. **接入** —— 一份查證過的 MCP server 目錄 ＋ **一支可執行的 skill**，讓 agent 有能力
+   **把東西部署上線**：AI Token King（預設模型閘道）＋ AWS／GCP／Azure／Railway／Vercel／E2B／TiDB。
 2. **發布** —— 長期目標是發布一組被 agent 反覆呼叫的自有 MCP server。
    **現況是：一支都還沒有發布。**
 
@@ -24,7 +24,7 @@ Discovery → Workflow → [ Execution ] → Model Decision → Cost Decision �
 |---|---|
 | 已發布的 MCP server | **0** |
 | 北極星 `call/wk` | `NO_BASELINE_AVAILABLE`（**刻意不寫 0** —— 0 看起來像量測結果） |
-| 本 repo 現在提供什麼 | **八個 MCP server 的接入契約**｜策略定義與抽取判準｜AI Token King 閘道的能力契約｜設定與安裝｜實測紀錄 |
+| 本 repo 現在提供什麼 | **八個 MCP server 的接入契約 ＋ `cloud-deploy-mcp` skill**｜策略定義與抽取判準｜AI Token King 閘道的能力契約｜設定與安裝｜實測紀錄 |
 | 為什麼還沒開始寫 | 抽取判準的前置條件未滿足，見 [`strategy/01-extraction-criteria.md`](strategy/01-extraction-criteria.md) |
 
 > 🔑 **這裡的東西預設走 [AI Token King](https://www.aitokenking.com.tw/)** ——
@@ -74,6 +74,14 @@ cp .mcp.json.example .mcp.json    # 然後刪掉你不需要的那幾個
 claude
 ```
 
+然後在 Claude Code 裡直接說你要做什麼——`cloud-deploy-mcp` 會被觸發：
+
+```
+把這個專案部署到 Railway
+線上那個服務掛了，幫我看 log
+call_aws 加進白名單安不安全？
+```
+
 **驗證：** 呼叫 `list_models`（唯讀、不扣額度）。列得出模型清單就是通了。
 **呼叫回 401？** 九成是環境變數沒 `export`，見 [`docs/installation.md`](docs/installation.md) §2。
 
@@ -83,6 +91,7 @@ claude
 
 | 路徑 | 內容 |
 |---|---|
+| [`skills/cloud-deploy-mcp/`](skills/cloud-deploy-mcp/SKILL.md) | **★ 可執行的 skill。** 路線判定器 ＋ 逐平台操作 ＋ 部署前檢查清單 ＋ 出事了怎麼辦 |
 | [`catalog/README.md`](catalog/README.md) | **MCP server 目錄。** 八個平台的接入契約 ＋ **A／B／C 三級分類** ＋ 白名單在哪三個平台失效 |
 | [`catalog/*.yaml`](catalog/) | 逐平台：設定區塊、認證、工具三級分類、已查證事實、缺口 |
 | [`docs/cloud-deployment-mcp.md`](docs/cloud-deployment-mcp.md) | **開發者入口。** 把八個接起來、怎麼不出事、七個平台各適合什麼 |

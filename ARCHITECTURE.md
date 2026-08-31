@@ -62,6 +62,10 @@ Discovery  →  Workflow   →  [ Execution ]  →  Model Decision  →  Cost De
 │                            已查證事實／已撤回宣稱／降級路徑 │
 │    openai-compatible.yaml  替代樣板（capabilities=unknown） │
 ├──────────────────────────────────────────────────────────┤
+│  skills/       ★ 產物 · cloud-deploy-mcp（人與 agent 的入口）│
+│                  路線判定器／逐平台操作／檢查清單／出事處置  │
+│                  ⚠️ 落後於 catalog 會被 check_catalog.py 擋  │
+├──────────────────────────────────────────────────────────┤
 │  catalog/      ★ 接入層 · 八個 MCP server 的接入契約        │
 │    aitokenking       預設 AI 模型閘道（A9／B5／C0）         │
 │    aws  gcp-cloud-run  azure  railway  vercel  e2b  tidb    │
@@ -70,7 +74,7 @@ Discovery  →  Workflow   →  [ Execution ]  →  Model Decision  →  Cost De
 │  docs/         installation.md ／ aitokenking-mcp-service  │
 │                cloud-deployment-mcp.md（開發者入口）        │
 │  scripts/      setup-aitokenking.sh（全域設定＋白名單防呆） │
-│                check_catalog.py（三級分類機器檢核）         │
+│                check_catalog.py（三級分類＋skill 一致性）    │
 │  .mcp.json.example  八個 server 的設定範本                  │
 └──────────────────────────────────────────────────────────┘
 ```

@@ -15,6 +15,7 @@
 | `strategy/00`、`01` | 產物 | ✅ 但要說得出改的理由 |
 | `providers/*.yaml` | **canonical 事實** | ✅ 但每加一條 `verified_facts` 必須附 `verified_at` 與 `source` |
 | `catalog/*.yaml` | **接入契約** | ✅ 但每條 `verified_facts` 必須附 `verified_at` ＋ `source` ＋ `evidence`；查不到就進 `gaps` |
+| `skills/*/SKILL.md` | **產物**（catalog 的下游） | ✅ 但新增平台契約時必須同步更新，否則 CI 擋 |
 | `docs/` | 產物 | ✅ 與 `providers/`／`catalog/` 不一致時，錯的是 `docs/` |
 
 **② 你加的是事實還是宣稱？**
@@ -60,7 +61,10 @@ grep -rn 'sk-[A-Za-z0-9]\{16,\}' --exclude-dir=.git . && echo '🔴 疑似金鑰
 同一支工具跨兩組｜`allowlist_viable: false` 卻沒寫替代邊界｜
 `purchase: true` 沒寫 `purchase_note`｜`verified_facts` 缺出處或日期｜
 範本把 AWS 的 `READ_OPERATIONS_ONLY` 或 Azure 的 `--read-only` 關掉｜
-範本裡出現真的金鑰而不是 `${VAR}` 參照｜範本帶 `autoApprove`。
+範本裡出現真的金鑰而不是 `${VAR}` 參照｜範本帶 `autoApprove`｜
+skill 缺三嵌入點任一｜skill 的 `name` 與資料夾不符｜
+skill 宣告 `billable: false` 卻列了 B 組扣費工具｜
+**skill 沒提到某個已存在的 catalog 平台**｜skill 引用了不存在的本地路徑（`REF-1`）。
 
 **它不擋的：** 工具三組全空（未盤點）只 WARN，因為那是誠實的空白 ——
 **能擋 PR 的檢核要留給「錯了就回不去」的那一類。**
