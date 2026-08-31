@@ -149,7 +149,7 @@ prompt-cost-mcp
 
 | ID | 待決事項 | 誰決定 |
 |---|---|---|
-| **OMSN-D1** | 本 repo 與 Media House／virtual-strategy-lab 的資產歸屬邊界（哪些留原地、哪些只留指標） | Frank |
+| ~~**OMSN-D1**~~ | 本 repo 與 Media House／virtual-strategy-lab 的資產歸屬邊界 | **✅ 已裁定 2026-08-31，見 §8.1** |
 | **OMSN-D2** | 在沒有 Phase 3 呼叫紀錄的情況下，是否先做一支**已知需求**的 MCP 作為流程探針（目的是走一次發布與 registry 登錄，不是佔節點） | Frank + Edwin |
 | **OMSN-D3** | `call/wk` 在零 telemetry 前提下**怎麼量** —— 這是 attribution 命門在本 repo 的具體形式 | Edwin（Jet 覆核） |
 | **OMSN-D4** | 是否沿用上游六個候選名稱，或等呼叫紀錄出來後重新命名 | Edwin |
@@ -157,3 +157,35 @@ prompt-cost-mcp
 **OMSN-D3 是四個裡唯一會推翻北極星的一個。**
 零 telemetry 是不可讓步的紅線，而 `call/wk` 需要知道有人呼叫過——
 **在解掉這個矛盾之前，`call/wk` 是一個我們同意採用但量不到的指標。**
+
+---
+
+### §8.1 OMSN-D1 裁定（Frank，2026-08-31）：上游完全不動
+
+**裁定內容：** 本 repo 為**純加法**。上游兩個 repo 不刪除任何檔案、不加任何指標。
+
+| 資產 | 上游 | 本 repo |
+|---|---|---|
+| 策略原文（§4.1／Phase 4／ATKL S1） | 留在原地，不加「已遷出」註記 | 死快照存 `strategy/source/` |
+| `providers/aitokenking.yaml` | 留在原地（Media House 80 支 skill 與 `AITK-1`／`sync_provider_capsule.py --check` 的依賴） | 各自一份 |
+| `skills/aitokenking-setup/` | 留在原地 | 等價物改寫為 `docs/installation.md` |
+| `docs/aitokenking-mcp-service.md` | 留在原地 | 遷入版本（三處改寫已逐條標注） |
+
+**⚠️ 這個裁定要付的代價，先寫在這裡：同一份事實現在有兩個家。**
+
+Media House 自己的鐵律寫著「**重複的事實一定會分岔**」——
+而我們現在刻意製造了一次重複。**分岔不是風險，是時間問題。**
+最可能先岔開的三處，依可能性排序：
+
+| # | 最可能先分岔的地方 | 為什麼是它 |
+|---|---|---|
+| 1 | **`providers/aitokenking.yaml` 的 `verified_facts` 與 `retracted_claims`** | 它是**唯一會因為外部世界改變而必須更新**的檔案（官方文件改版、方案變動、能力增減）。改了一邊而忘了另一邊，兩邊都會看起來是對的 |
+| 2 | **A／B 組工具清單** | 平台增減工具時要同步三處：兩個 repo 的 yaml ＋ 各自的 setup 腳本硬編碼陣列 |
+| 3 | **canonical 環境變數名** | 上游 `virtual-strategy-lab` 的 `.mcp.json` 目前**仍是舊的 `AITK_API_KEY`**，本 repo 是 `AITOKENKING_API_KEY`。**這一處在裁定當下就已經是分岔的，不是未來式** |
+
+**判定規則（分岔發生時不要靠記憶）：**
+**以 `verified_at` 較新的那一份為準，不以哪個 repo 較新為準。**
+兩份日期相同而內容不同時，一律回去查官方文件重新驗證，**不得取兩者折衷**。
+
+**這一段不是提醒，是這個裁定的完整內容。**
+一個只寫了好處沒寫代價的決定，三個月後會被讀成「當初別無選擇」。

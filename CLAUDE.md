@@ -98,3 +98,11 @@ AI Token King 開源獲客基礎設施的 **Execution 節點**。
 
 **兩者的相關原文以死快照存在 `strategy/source/`，不與上游同步。**
 上游更新後本 repo 不會自動變 —— 要更新須手動重取並換掉快照標頭的 commit 欄位。
+
+**★ OMSN-D1 已裁定（2026-08-31）：上游完全不動，本 repo 為純加法。**
+代價是同一份事實現在有兩個家，而 `virtual-strategy-lab` 的 `.mcp.json`
+**在裁定當下就已經與本 repo 分岔**（它仍是舊的 `AITK_API_KEY`）。
+
+**分岔時的判定規則：以 `verified_at` 較新的那一份為準，不以哪個 repo 較新為準。**
+日期相同而內容不同時，回去查官方文件重新驗證，**不得取兩者折衷**。
+完整裁定與最可能先分岔的三處見 `strategy/00-overview.md` §8.1。
