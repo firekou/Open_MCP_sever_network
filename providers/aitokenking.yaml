@@ -1,0 +1,125 @@
+# AI Token King —— Provider Capability Contract（canonical）
+#
+# ★ 這份檔案取代原本散落在每支 skill frontmatter 的 x-aitokenking 區塊。
+#   理由（P0-1）：Agent Skills 標準 frontmatter 的 metadata 是 string → string map，
+#   放不下巢狀結構。塞得下的地方是這裡，frontmatter 只留指標。
+#
+# ★ 依賴從「廠商依賴」改成「能力依賴」（P0-3）。
+#   舊文案寫「換任何 OpenAI 相容端點，流程完全一樣」——那句話不成立：
+#   這條產線用到 model discovery／vision／usage／balance／image／video，
+#   一般 OpenAI 相容 provider 通常只支援其中一部分。
+#   誠實的說法是「方法論不綁 provider，但缺哪個能力，對應步驟就降級」。
+
+id: aitokenking
+label: AI Token King
+vendor: 兌心科技
+is_default: true
+
+endpoints:
+  api: https://api.aitokenking.com.tw/api/v1     # OpenAI 相容
+  mcp: https://api.aitokenking.com.tw/mcp        # Streamable HTTP MCP
+  register: https://www.aitokenking.com.tw/
+  docs: https://www.aitokenking.com.tw/assets/docs/zh/index.html#mcp-server
+  billing: https://www.aitokenking.com.tw/
+
+auth:
+  # ★ canonical 名稱以官方文件為準（P0-6）。
+  #   查證：2026-08-29 抓取官方 docs 全文，`AITOKENKING_API_KEY` 與
+  #   `X-Aitokenking-Api-Key` 均出現；`AITK_API_KEY` 一次都沒出現。
+  #   我們先前用的是自己發明的簡寫 —— 文件與程式碼不一致會直接變成 onboarding 成本。
+  env: AITOKENKING_API_KEY
+  header: X-Aitokenking-Api-Key
+  bearer_supported: true          # HTTP API 走 Authorization: Bearer
+  deprecated_env_aliases:
+    - name: AITK_API_KEY
+      status: deprecated
+      since: "2026-08-29"
+      note: 仍可用，但 setup 與 doctor 會 WARN。文件只教 canonical 名稱。
+
+capabilities:
+  model_discovery: true
+  chat: true
+  vision: true
+  usage_attribution: true
+  balance: true
+  image_generation: true
+  video_generation: true
+  anthropic_messages: true
+  openai_responses: true
+  web_access: false               # ★ 實測：chat_completion 無網路存取，即時資料一律答不出來
+
+# 路由別名 —— 用它取代硬寫 model id（P0-5）
+# 查證：2026-08-29 官方 docs 全文，五個別名均出現
+routing_aliases:
+  - id: mwf/coding-auto
+    use: 路由到當下最佳可用編程模型，工具端不必改設定
+  - id: mwf/coding-fast
+    use: 偏快
+  - id: mwf/coding-long
+    use: 長上下文
+  - id: mwf/low-cost
+    use: 較低價格、可接受的編程品質
+  - id: mwf/vision-chat
+    use: 視覺輸入、文字輸出
+
+# ★ 刻意不列任何具體 model id。
+#   repo 鐵律是「永遠先 list_models 再寫」，而 template 裡放一個
+#   短生命週期的 model id 等於自己違反自己的規則（P0-5）。
+
+tools:
+  readonly:      # A 組 · 不扣額度 → 可進 permissions.allow
+    - list_models
+    - get_model
+    - list_image_models
+    - list_video_models
+    - get_balance
+    - list_usage
+    - list_transactions
+    - get_image_generation
+    - get_video_generation
+  billable:      # B 組 · 每次呼叫都扣額度 → ★ 永不自動允許
+    - chat_completion
+    - create_message
+    - create_response
+    - create_image_generation
+    - create_video_generation
+
+# ★ 可驗證的事實才寫在這裡，每一條都要有 verified_at 與 source（P0-7）
+verified_facts:
+  - fact: canonical 環境變數為 AITOKENKING_API_KEY
+    verified_at: "2026-08-29"
+    source: 官方 docs 全文檢索
+    evidence: E2
+  - fact: canonical header 為 X-Aitokenking-Api-Key
+    verified_at: "2026-08-29"
+    source: 官方 docs 全文檢索
+    evidence: E2
+  - fact: mwf/* 五個路由別名存在
+    verified_at: "2026-08-29"
+    source: 官方 docs 全文檢索
+    evidence: E2
+  - fact: chat_completion 沒有網路存取
+    verified_at: "2026-08-19"
+    source: 我方實測（提問即時榜單，模型明確表示無法取得）
+    evidence: E1
+
+# ★ 我們曾經寫過、但查不到依據的宣稱 —— 留在這裡是刻意的
+retracted_claims:
+  - claim: 新帳戶有試用額度，可直接跑完本 skill
+    retracted_at: "2026-08-29"
+    reason: >-
+      2026-08-29 抓取官方 docs 全文，「試用」「免費額度」「free trial」「贈送」
+      命中 0 處。這句話是我方自己加的，不是查得到的事實。
+      方案內容隨時可能變動，把它寫死在八支 skill 裡，等於埋了八個會一起過期的宣稱。
+    replacement: >-
+      目前可用的方案與任何試用額度以官網當下頁面為準：
+      https://www.aitokenking.com.tw/
+
+degradation:
+  # 換 provider 時，缺哪個能力就降級哪一步 —— 不是「流程完全一樣」
+  model_discovery: 缺 → 無法自動選型，須人工指定 model id 並自行承擔下架風險
+  vision: 缺 → L1 步驟④（關鍵幀讀圖）無法執行，只剩 OCR，讀不出「這是什麼介面」
+  usage_attribution: 缺 → §∞ 成本欄一律「未量測」，不得填 0
+  balance: 缺 → 無法前後相減對帳，成本紀律退化為估算
+  image_generation: 缺 → control-map 三條路線的重生成步驟需外部工具
+  video_generation: 缺 → 形變序列合成需外部工具

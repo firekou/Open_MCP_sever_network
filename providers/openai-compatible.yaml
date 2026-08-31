@@ -1,0 +1,47 @@
+# 泛 OpenAI 相容端點 —— 替代 provider 樣板
+#
+# ★ 這份檔案存在的唯一目的，是讓「本集群不綁定供應商」這句話從口號變成規格。
+#   把你的端點填進來，validator 與 doctor 就知道哪些步驟會降級。
+#
+# ⚠️ capabilities 全部預設 unknown 而不是 true。
+#   預設 true 等於替使用者的 provider 作保，而我方沒有量測過任何一家。
+#   unknown 是誠實的初始值 —— 跑 aitokenking-mcp-doctor 探測後再填。
+
+id: openai-compatible
+label: 任意 OpenAI 相容端點
+is_default: false
+
+endpoints:
+  api: ${AITOKENKING_BASE_URL}     # 例：https://your-gateway.example/v1
+  mcp: null
+  register: null
+  docs: null
+
+auth:
+  env: AITOKENKING_API_KEY
+  header: null
+  bearer_supported: true
+
+capabilities:
+  model_discovery: unknown         # GET /models 有沒有？
+  chat: true                       # 唯一可合理預設的一項
+  vision: unknown
+  usage_attribution: unknown       # 多數自架閘道沒有
+  balance: unknown                 # 多數沒有
+  image_generation: unknown
+  video_generation: unknown
+  anthropic_messages: unknown
+  openai_responses: unknown
+  web_access: false
+
+routing_aliases: []
+
+tools:
+  readonly: []
+  billable: []
+
+verified_facts: []
+
+notes: >-
+  能力不足時的降級路徑見 providers/aitokenking.yaml 的 degradation 區塊 ——
+  那份表列的是「缺這個能力，哪一步會壞成什麼樣」，與 provider 是誰無關。

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "aitokenking": {
+      "type": "http",
+      "url": "https://api.aitokenking.com.tw/mcp",
+      "headers": {
+        "X-Aitokenking-Api-Key": "${AITOKENKING_API_KEY}"
+      }
+    }
+  }
+}
