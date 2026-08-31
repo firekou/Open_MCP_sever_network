@@ -1,0 +1,88 @@
+# Amazon AWS —— AWS API MCP Server（接入契約）
+
+id: aws
+label: Amazon Web Services
+vendor: AWS Labs
+official: true          # awslabs/mcp 官方組織
+status: ga
+repo: https://github.com/awslabs/mcp
+docs: https://awslabs.github.io/mcp/servers/aws-api-mcp-server
+
+transport: stdio
+
+config:
+  awslabs.aws-api-mcp-server:
+    command: uvx
+    args:
+      - awslabs.aws-api-mcp-server@latest
+    env:
+      AWS_REGION: us-east-1
+      # ★ 強烈建議先從唯讀開始，確定要動再關掉
+      READ_OPERATIONS_ONLY: "true"
+      REQUIRE_MUTATION_CONSENT: "true"
+
+auth:
+  method: aws_credential_chain
+  env:
+    - AWS_API_MCP_PROFILE_NAME   # 建議：指定 profile，預設 "default"
+    - AWS_REGION
+  fallback_env:                  # 不指定 profile 時走標準 boto3 憑證鏈
+    - AWS_ACCESS_KEY_ID
+    - AWS_SECRET_ACCESS_KEY
+    - AWS_SESSION_TOKEN
+  notes: >-
+    憑證不由 MCP server 管理，走既有的 AWS 憑證鏈。
+    ⚠️ 這代表 agent 拿到的權限 = 那個 profile 的權限。
+    最小權限的責任在 IAM 不在 MCP 設定。
+
+safety:
+  # ★★ 本目錄最重要的一條例外
+  read_only_flag: READ_OPERATIONS_ONLY=true
+  extra_flag: REQUIRE_MUTATION_CONSENT=true   # 非讀取操作前要求明示同意
+  allowlist_viable: false
+  allowlist_viable_reason: >-
+    ★ call_aws 是「一支工具打整個 AWS CLI」。同一支工具可以 aws s3 ls，
+    也可以 aws rds delete-db-instance —— 工具名稱層級分不出讀寫。
+    把 call_aws 加進 permissions.allow，等於把整個 AWS 帳號加進白名單。
+    ⇒ 這個平台的安全邊界不在白名單，在 READ_OPERATIONS_ONLY 與 IAM。
+
+  group_a:
+    - suggest_aws_commands        # 自然語言 → 建議 CLI 指令，不執行
+  group_b: []
+  group_c:
+    - call_aws                    # ★ 唯讀與破壞性都走這一支
+    - get_execution_plan          # 實驗性，需 EXPERIMENTAL_AGENT_SCRIPTS=true
+  purchase: false
+  cost_note: >-
+    不直接購買，但 call_aws 開出來的任何資源都會計費，
+    且沒有任何額度上限機制 —— 費用邊界在 AWS 帳單不在這支 server。
+
+  vendor_warnings:
+    - "NOT designed for multi-tenant environments. Do not use this server to serve multiple users."
+    - "aws s3 sync 可在無警告下覆寫整個目錄；檔案可被修改、覆寫或刪除而不再確認"
+    - "Do not connect this MCP server to data sources with untrusted data.（prompt injection）"
+  denylisted_by_vendor:
+    - deploy install / uninstall
+    - emr ssh / sock / get / put
+
+sibling_servers:                  # awslabs/mcp 底下還有，本 repo 只接入上面那支
+  - aws-documentation-mcp-server  # 純文件查詢，風險最低
+  - aws-iac-mcp-server
+  - aws-support-mcp-server
+  - aws-network-mcp-server
+
+verified_facts:
+  - fact: 設定為 uvx awslabs.aws-api-mcp-server@latest；環境變數含 READ_OPERATIONS_ONLY 與 REQUIRE_MUTATION_CONSENT
+    verified_at: "2026-08-31"
+    source: https://awslabs.github.io/mcp/servers/aws-api-mcp-server
+    evidence: E2
+  - fact: 工具為 call_aws / suggest_aws_commands / get_execution_plan 三支
+    verified_at: "2026-08-31"
+    source: 同上
+    evidence: E2
+
+gaps:
+  - id: AWS-1
+    gap: READ_OPERATIONS_ONLY 與 REQUIRE_MUTATION_CONSENT 的實際攔截行為我方未實測，僅依官方文件（E2 非 E1）
+  - id: AWS-2
+    gap: 未查證 call_aws 是否對 CLI 參數做進一步驗證，或只做服務層 denylist

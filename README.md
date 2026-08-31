@@ -3,8 +3,13 @@
 **Skill 告訴 Agent「怎麼做」，MCP 提供 Agent「真正可以做什麼」。**
 
 這個 repo 是 AI Token King 開源獲客基礎設施六節點鏈上的 **Execution 節點**。
-它的長期目標是發布一組被 agent 反覆呼叫的 MCP server；
-**它的現況是：一支都還沒有發布。**
+
+它做兩件事：
+
+1. **接入** —— 一份查證過的 MCP server 目錄，讓 agent 有能力**把東西部署上線**：
+   AI Token King（預設模型閘道）＋ AWS／GCP／Azure／Railway／Vercel／E2B／TiDB。
+2. **發布** —— 長期目標是發布一組被 agent 反覆呼叫的自有 MCP server。
+   **現況是：一支都還沒有發布。**
 
 ```
 Discovery → Workflow → [ Execution ] → Model Decision → Cost Decision → Routing
@@ -19,7 +24,7 @@ Discovery → Workflow → [ Execution ] → Model Decision → Cost Decision �
 |---|---|
 | 已發布的 MCP server | **0** |
 | 北極星 `call/wk` | `NO_BASELINE_AVAILABLE`（**刻意不寫 0** —— 0 看起來像量測結果） |
-| 本 repo 現在提供什麼 | 策略定義與抽取判準｜AI Token King 閘道的能力契約｜設定與安裝｜實測紀錄 |
+| 本 repo 現在提供什麼 | **八個 MCP server 的接入契約**｜策略定義與抽取判準｜AI Token King 閘道的能力契約｜設定與安裝｜實測紀錄 |
 | 為什麼還沒開始寫 | 抽取判準的前置條件未滿足，見 [`strategy/01-extraction-criteria.md`](strategy/01-extraction-criteria.md) |
 
 > 🔑 **這裡的東西預設走 [AI Token King](https://www.aitokenking.com.tw/)** ——
@@ -62,7 +67,10 @@ export AITOKENKING_API_KEY='<你的 key>'      # ⚠️ 必須在啟動 claude �
 bash scripts/setup-aitokenking.sh --dry-run   # 先看它會做什麼
 bash scripts/setup-aitokenking.sh
 
-# 3. 開工
+# 3. 想要 agent 有能力部署上線（選配）
+cp .mcp.json.example .mcp.json    # 然後刪掉你不需要的那幾個
+
+# 4. 開工
 claude
 ```
 
@@ -75,6 +83,10 @@ claude
 
 | 路徑 | 內容 |
 |---|---|
+| [`catalog/README.md`](catalog/README.md) | **MCP server 目錄。** 八個平台的接入契約 ＋ **A／B／C 三級分類** ＋ 白名單在哪三個平台失效 |
+| [`catalog/*.yaml`](catalog/) | 逐平台：設定區塊、認證、工具三級分類、已查證事實、缺口 |
+| [`docs/cloud-deployment-mcp.md`](docs/cloud-deployment-mcp.md) | **開發者入口。** 把八個接起來、怎麼不出事、七個平台各適合什麼 |
+| [`.mcp.json.example`](.mcp.json.example) | 八個 server 的設定範本（金鑰全走環境變數參照） |
 | [`strategy/00-overview.md`](strategy/00-overview.md) | **入口。** 策略定義、節點位置、指標、缺口 `OMSN-G1~G8`、待決 `OMSN-D1~D4` |
 | [`strategy/01-extraction-criteria.md`](strategy/01-extraction-criteria.md) | **決定「做哪一支 MCP」的唯一程序。** 三條 AND 判準、六個候選現況、探針 |
 | [`strategy/source/`](strategy/source/) | 上游原文**死快照**，逐字保存不改寫、不與上游同步 |
@@ -98,10 +110,19 @@ MCP server 比 skill 更容易偷渡回報，因為呼叫它的時候沒有人�
 **代價要先承認：這使 `call/wk` 量不到。** 這個矛盾沒有被解決，它被記在
 `strategy/00-overview.md` 的 **OMSN-D3** —— **先記下矛盾，好過先偷資料。**
 
-**③ 扣費工具永不預設允許。**
-A 組 9 支唯讀工具不扣額度，進白名單；
-B 組 5 支（`chat_completion`／`create_message`／`create_response`／圖片與影片生成）
-**每次呼叫都扣**，一律逐次人工核准。`setup-aitokenking.sh` 會主動偵測並以非 0 結束。
+**③ 三級分類：唯讀／動錢／動基礎設施。**
+接上雲端之後，原本的兩級不夠用了——**帳單可以事後補救，刪掉的正式資料庫不能。**
+A 組唯讀可進白名單；**B 組動錢與 C 組動基礎設施永不自動允許**。
+鐵律「機器可擬不可動錢」在這裡多一句：**機器可讀不可動基礎設施。**
+
+**⚠️ 而且在 AWS、Railway、TiDB 這三個平台上，「只把唯讀工具加白名單」根本不成立**——
+`call_aws` 一支工具打整個 AWS CLI、`railway-agent` 是開放式代理、`db_execute` 吃任意 DDL。
+**把 `call_aws` 加進白名單，等於把整個 AWS 帳號加進白名單。**
+正確邊界在 server 旗標（`READ_OPERATIONS_ONLY`／`--read-only`）或帳號權限，
+逐項見 [`catalog/README.md`](catalog/README.md)。
+
+**🔴 另外，Vercel MCP 有四支工具可以直接刷卡**（`buy_pro`／`buy_credits`／`buy_addon`／`buy_domain`）。
+那不是「呼叫會產生費用」，是「呼叫會完成一筆採購」。
 
 ---
 

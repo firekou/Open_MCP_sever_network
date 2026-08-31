@@ -1,0 +1,91 @@
+# Google Cloud —— Cloud Run MCP Server（接入契約）
+#
+# ★ GCP 有兩個不同的官方 MCP，用途不重疊，不要搞混：
+#   ① cloud-run-mcp（本檔）      部署應用到 Cloud Run
+#   ② googleapis/mcp-toolbox     連資料庫（Cloud SQL／Spanner／AlloyDB），舊名 genai-toolbox
+#   要「部署」的是 ①。②在本 repo 尚未接入。
+
+id: gcp-cloud-run
+label: Google Cloud Run
+vendor: Google Cloud Platform
+official: true
+status: ga
+repo: https://github.com/GoogleCloudPlatform/cloud-run-mcp
+npm: "@google-cloud/cloud-run-mcp"
+
+transport: stdio        # 亦可遠端部署後走 SSE，見 config_remote
+
+config:
+  cloud-run:
+    command: npx
+    args:
+      - -y
+      - "@google-cloud/cloud-run-mcp"
+    env:
+      GOOGLE_CLOUD_PROJECT: PROJECT_NAME
+      GOOGLE_CLOUD_REGION: PROJECT_REGION
+      DEFAULT_SERVICE_NAME: SERVICE_NAME
+
+config_remote:
+  # 把 server 自己部署到 Cloud Run，本機透過 IAM 認證連過去
+  # ⚠️ 這種模式只能部署到「server 自己所在的那個 GCP 專案」
+  cloud-run:
+    url: http://localhost:3000/sse
+
+auth:
+  method: gcloud_application_default_credentials
+  setup:
+    - gcloud auth login
+    - gcloud auth application-default login
+    - gcloud config set project YOUR_PROJECT_ID    # 遠端模式需要
+  env:
+    - GOOGLE_CLOUD_PROJECT
+    - GOOGLE_CLOUD_REGION
+    - DEFAULT_SERVICE_NAME
+  notes: >-
+    不使用 API key，走 gcloud 的 ADC。
+    ⇒ agent 拿到的權限 = 你 gcloud 登入身分的權限。
+
+safety:
+  read_only_flag: null
+  read_only_alternative: >-
+    沒有唯讀旗標。工具名稱層級分得清楚讀寫（deploy-* / create-* vs list-* / get-*），
+    所以逐工具白名單在這裡成立 —— 只把 A 組四支加進 permissions.allow 即可。
+  allowlist_viable: true
+
+  group_a:
+    - list-services
+    - get-service
+    - get-service-log
+    - list-projects        # 本機模式限定
+  group_b:
+    - create-project       # ★ 建立 GCP 專案並綁定 billing account（本機模式限定）
+  group_c:
+    - deploy-file-contents
+    - deploy-local-folder  # 本機模式限定
+  purchase: false
+  cost_note: >-
+    create-project 會綁定計費帳戶；deploy-* 部署出來的 Cloud Run 服務按用量計費。
+
+other_env:
+  SKIP_IAM_CHECK: 權限驗證，預設 true
+  ENABLE_HOST_VALIDATION: DNS rebinding 防護，預設關閉
+  ALLOWED_HOSTS: 逗號分隔的允許主機
+
+verified_facts:
+  - fact: 本機設定為 npx -y @google-cloud/cloud-run-mcp；認證走 gcloud auth application-default login
+    verified_at: "2026-08-31"
+    source: https://github.com/GoogleCloudPlatform/cloud-run-mcp
+    evidence: E2
+  - fact: 工具含 deploy-file-contents／deploy-local-folder／create-project 與 list-services／get-service／get-service-log／list-projects
+    verified_at: "2026-08-31"
+    source: 同上
+    evidence: E2
+
+gaps:
+  - id: GCP-1
+    gap: 只涵蓋 Cloud Run。GCE／GKE／Cloud Functions 的部署不在這支 server 範圍內
+  - id: GCP-2
+    gap: googleapis/mcp-toolbox（資料庫）未接入、未評估
+  - id: GCP-3
+    gap: ENABLE_HOST_VALIDATION 預設關閉的實際風險我方未評估

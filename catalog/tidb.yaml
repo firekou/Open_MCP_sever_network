@@ -1,0 +1,83 @@
+# TiDB —— 官方 MCP Server（接入契約）
+
+id: tidb
+label: TiDB
+vendor: PingCAP
+official: true
+status: ga
+docs: https://docs.pingcap.com/ai/tidb-mcp-server/
+alt_docs: https://pingcap.github.io/ai/integrations/tidb-mcp-server/
+
+transport: stdio        # 官方預設 STDIO，不需先啟動獨立 server
+
+config:
+  TiDB:
+    command: uvx
+    args:
+      - --from
+      - "pytidb[mcp]"
+      - tidb-mcp-server
+    env:
+      TIDB_HOST: localhost
+      TIDB_PORT: "4000"
+      TIDB_USERNAME: root
+      TIDB_PASSWORD: ${TIDB_PASSWORD}   # ★ 密碼走環境變數，不寫進設定檔
+      TIDB_DATABASE: test
+
+auth:
+  method: database_credentials
+  env:
+    - TIDB_HOST
+    - TIDB_PORT
+    - TIDB_USERNAME
+    - TIDB_PASSWORD
+    - TIDB_DATABASE
+  requirements:
+    - Python >= 3.10
+    - uv
+  notes: >-
+    ⚠️ 官方文件的範例直接把密碼寫在 env 區塊裡。
+    本 repo 不照抄那個寫法 —— 密碼一律走 ${TIDB_PASSWORD} 參照，理由見 SECURITY.md。
+
+safety:
+  read_only_flag: null
+  # ★ 這是三個「白名單失效」平台裡，唯一有乾淨替代方案的
+  read_only_alternative: >-
+    ★ 沒有唯讀旗標，但資料庫本身就有權限系統 ——
+    給 agent 一個「只有 SELECT 權限」的資料庫帳號，比任何客戶端白名單都可靠：
+    它在 server 之外、在 client 之外，換掉哪一層都還在。
+    ⇒ 這個平台的正確做法是「用對帳號」，不是「設對白名單」。
+  allowlist_viable: false
+  allowlist_viable_reason: >-
+    ★ db_execute 一支工具吃任意 DML／DDL。
+    允許它 = 允許 DROP TABLE；不允許它 = 連建表都不行。
+    工具名稱層級沒有中間地帶，中間地帶只存在於資料庫權限。
+
+  group_a:
+    - show_databases
+    - switch_database
+    - show_tables
+    - db_query           # 官方描述：execute read-only SQL queries
+  group_b: []
+  group_c:
+    - db_execute         # ★ 任意 DML／DDL
+    - db_create_user
+    - db_remove_user
+  purchase: false
+  cost_note: 依 TiDB Cloud 方案計費；Starter 方案有免費額度（額度內容以官網當下頁面為準，此處刻意不複製會過期的數字）
+
+verified_facts:
+  - fact: STDIO 模式設定為 uvx --from pytidb[mcp] tidb-mcp-server，環境變數為 TIDB_HOST/PORT/USERNAME/PASSWORD/DATABASE
+    verified_at: "2026-08-31"
+    source: https://docs.pingcap.com/ai/tidb-mcp-server/
+    evidence: E2
+  - fact: 工具為 show_databases／switch_database／show_tables／db_query（唯讀）與 db_execute／db_create_user／db_remove_user（寫入）
+    verified_at: "2026-08-31"
+    source: 同上
+    evidence: E2
+
+gaps:
+  - id: TIDB-1
+    gap: 未查證 db_query 是否在 server 端強制拒絕非 SELECT 語句，或只是文件上的描述
+  - id: TIDB-2
+    gap: 官方另有 c4pt0r/mcp-server-tidb 等非官方實作流通，安裝前須確認來源

@@ -14,7 +14,8 @@
 | `strategy/source/` | **原稿**（上游死快照） | ❌ 逐字保存。要修正判斷去改 `strategy/00`／`01` |
 | `strategy/00`、`01` | 產物 | ✅ 但要說得出改的理由 |
 | `providers/*.yaml` | **canonical 事實** | ✅ 但每加一條 `verified_facts` 必須附 `verified_at` 與 `source` |
-| `docs/` | 產物 | ✅ 與 `providers/` 不一致時，錯的是 `docs/` |
+| `catalog/*.yaml` | **接入契約** | ✅ 但每條 `verified_facts` 必須附 `verified_at` ＋ `source` ＋ `evidence`；查不到就進 `gaps` |
+| `docs/` | 產物 | ✅ 與 `providers/`／`catalog/` 不一致時，錯的是 `docs/` |
 
 **② 你加的是事實還是宣稱？**
 
@@ -44,6 +45,7 @@
 ## 提交前
 
 ```bash
+python3 scripts/check_catalog.py                  # ★ 三級分類 ＋ 範本安全預設值（需 PyYAML）
 bash -n scripts/setup-aitokenking.sh              # shell 語法
 bash scripts/setup-aitokenking.sh --dry-run       # 乾跑，不寫入任何檔案
 python3 -c "import json;json.load(open('.mcp.json'))"
@@ -52,6 +54,16 @@ grep -rn 'sk-[A-Za-z0-9]\{16,\}' --exclude-dir=.git . && echo '🔴 疑似金鑰
 ```
 
 **最後一項不是形式。** 金鑰進了 git 歷史，刪檔案沒有用 —— 必須輪替。
+
+### `check_catalog.py` 會擋下什麼（已反向測試確認會響）
+
+同一支工具跨兩組｜`allowlist_viable: false` 卻沒寫替代邊界｜
+`purchase: true` 沒寫 `purchase_note`｜`verified_facts` 缺出處或日期｜
+範本把 AWS 的 `READ_OPERATIONS_ONLY` 或 Azure 的 `--read-only` 關掉｜
+範本裡出現真的金鑰而不是 `${VAR}` 參照｜範本帶 `autoApprove`。
+
+**它不擋的：** 工具三組全空（未盤點）只 WARN，因為那是誠實的空白 ——
+**能擋 PR 的檢核要留給「錯了就回不去」的那一類。**
 
 ---
 

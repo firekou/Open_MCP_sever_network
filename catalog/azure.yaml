@@ -1,0 +1,82 @@
+# Microsoft Azure —— Azure MCP Server（接入契約）
+
+id: azure
+label: Microsoft Azure
+vendor: Microsoft
+official: true
+status: beta            # npm 版本號帶 -beta（查證當日為 3.0.0-beta.38）
+repo: https://github.com/microsoft/mcp/tree/main/servers/Azure.Mcp.Server
+mirror_repo: https://github.com/Azure/azure-mcp
+docs: https://learn.microsoft.com/en-us/azure/developer/azure-mcp-server/get-started
+packages:
+  npm: "@azure/mcp"
+  nuget: Azure.Mcp
+  pypi: msmcp-azure
+
+transport: stdio
+
+config:
+  azure-mcp-server:
+    command: npx
+    args:
+      - -y
+      - "@azure/mcp@latest"
+      - server
+      - start
+      # ★ 建議加上 --read-only 先跑一陣子，確定要動再拿掉
+      - --read-only
+
+auth:
+  method: azure_identity_sdk
+  setup:
+    - az login          # 或 VS Code 的 "Azure: Sign In"
+  env: []
+  notes: >-
+    憑證由官方 Azure Identity SDK 處理，server 不儲存也不管理 token。
+    ⇒ agent 拿到的權限 = 你登入身分的 Azure RBAC 權限。
+
+safety:
+  read_only_flag: "--read-only"
+  read_only_semantics: >-
+    ★ 這個旗標的做法與 AWS 不同：它是「過濾工具清單」，
+    只讓唯讀操作的工具出現在 tools/list，而不是在執行時攔截。
+    適用於所有 mode（namespace 預設模式與 --mode single 皆可）。
+    官方描述其為 learning／auditing／resource discovery 的合理預設值。
+  vscode_equivalent: 'azureMcp.readOnly: false'   # VS Code 設定，非 CLI 旗標
+  allowlist_viable: partial
+  allowlist_viable_reason: >-
+    Azure MCP 的工具數量龐大且以 namespace 分組，逐工具白名單維護成本高、
+    且新版會增加工具 —— 白名單會靜默地跟不上。
+    ⇒ 建議以 --read-only 為主要邊界，白名單為輔。
+
+  group_a: []   # ⬜ 未逐支盤點，見 gaps AZ-1
+  group_b: []
+  group_c: []
+  purchase: false
+  cost_note: 開出來的 Azure 資源按用量計費；本 server 不直接購買方案
+
+  vendor_warnings:
+    - "MCP clients can invoke operations based on the user's Azure RBAC permissions. Autonomous or misconfigured clients may perform destructive actions."
+    - "建議部署前先設定最小權限 RBAC 角色與防護措施"
+
+verified_facts:
+  - fact: 設定為 npx -y @azure/mcp@latest server start；認證走 Azure Identity SDK
+    verified_at: "2026-08-31"
+    source: https://github.com/microsoft/mcp/blob/main/servers/Azure.Mcp.Server/README.md
+    evidence: E2
+  - fact: 存在 --read-only 旗標，適用所有 mode，作用為過濾工具清單只留唯讀操作
+    verified_at: "2026-08-31"
+    source: azmcp-commands.md（microsoft/mcp 與 Azure/azure-mcp 兩處皆載）
+    evidence: E2
+  - fact: 官方明示自主或設定錯誤的 client 可能執行破壞性操作
+    verified_at: "2026-08-31"
+    source: Azure.Mcp.Server README
+    evidence: E2
+
+gaps:
+  - id: AZ-1
+    gap: ⬜ 未逐支盤點工具清單。工具數量多且隨版本變動，A／B／C 三組留空是誠實不是遺漏
+  - id: AZ-2
+    gap: 套件仍為 beta 版號，介面可能變動
+  - id: AZ-3
+    gap: 未實測 --read-only 是否涵蓋所有 namespace

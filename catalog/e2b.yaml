@@ -1,0 +1,65 @@
+# E2B —— 官方 MCP Server（接入契約）
+#
+# 定位與其他六個不同：它不是「操控你的雲端帳號」，
+# 是「給 agent 一個隔離沙箱去跑程式碼」。風險方向相反 ——
+# 其他六個怕它動到你的正式環境，這一個正是為了不要動到你的正式環境而存在。
+
+id: e2b
+label: E2B
+vendor: e2b-dev
+official: true
+status: ga
+repo: https://github.com/e2b-dev/mcp-server
+npm: "@e2b/mcp-server"
+docs: https://e2b.dev/docs/mcp
+
+transport: stdio
+
+config:
+  e2b-server:
+    command: npx
+    args:
+      - -y
+      - "@e2b/mcp-server"
+    env:
+      E2B_API_KEY: ${E2B_API_KEY}    # ★ 走環境變數，不寫死金鑰
+
+auth:
+  method: api_key_env
+  env:
+    - E2B_API_KEY
+  notes: 金鑰於 e2b.dev 取得。★ 與本 repo 所有金鑰同一條紀律：不入庫、不入文件、不貼進對話視窗。
+
+safety:
+  read_only_flag: null
+  read_only_alternative: >-
+    沒有唯讀旗標，也不需要 —— 它執行的程式碼跑在 E2B 託管的隔離沙箱裡，
+    不是你的機器、也不是你的雲端帳號。
+    ⚠️ 但沙箱有網路，仍可對外發出請求；「隔離」指的是執行環境不是網路邊界。
+  allowlist_viable: unknown         # 見 gaps E2B-1
+
+  group_a: []
+  group_b: []                       # ⬜ 未逐支盤點
+  group_c: []
+  purchase: false
+  cost_note: >-
+    沙箱按用量計費。⚠️ 一個會自動起沙箱的 agent 可以在無人看管下持續產生費用，
+    而 sandbox 的計費不像模型呼叫那樣有明顯的「一次一次」的形狀。
+
+verified_facts:
+  - fact: 設定為 npx -y @e2b/mcp-server，金鑰環境變數為 E2B_API_KEY
+    verified_at: "2026-08-31"
+    source: https://github.com/e2b-dev/mcp-server（packages/js README）
+    evidence: E2
+  - fact: 官方定位為「在 E2B 安全沙箱中執行程式碼」的 MCP server
+    verified_at: "2026-08-31"
+    source: 同上
+    evidence: E2
+
+gaps:
+  - id: E2B-1
+    gap: ⬜ **README 未列出工具清單**，A／B／C 三組全部留空。這是查不到不是沒查 —— 補的方法是實際連上跑一次 tools/list
+  - id: E2B-2
+    gap: 未查證沙箱的網路出口是否可限制。若不可限制，「隔離」的邊界比直覺上窄
+  - id: E2B-3
+    gap: E2B 另有「MCP gateway in sandbox」產品（可在沙箱內存取 Docker MCP catalog 的 200+ 工具），與本檔的 mcp-server 是兩件事，未評估

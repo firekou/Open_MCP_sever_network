@@ -1,7 +1,18 @@
 # Open MCP Server Network —— 架構規格書
 
-**版本：** v0.1（2026-08-31，遷入日）
+**版本：** v0.2（2026-08-31，接入層加入）
 **一句話：** 佔住 agent 的 Execution 節點 —— 但只佔住有人真的會呼叫的那幾支。
+
+**★ v0.2（2026-08-31）新增接入層。** 本 repo 現在有**兩條線**，
+它們的方向相反，規則也不一樣：
+
+```
+接入線（已有東西）    別人的 MCP  →  我方 agent      規則：catalog/README.md 三級分類
+發布線（還是空的）    我方的 MCP  →  別人的 agent    規則：POLICY.md 十條不變量
+```
+
+**把兩者混在一起是本 repo 最容易犯的錯。**
+接入問的是「按下去會不會炸掉我的正式環境」；發布問的是「有沒有人真的呼叫」。
 
 ---
 
@@ -51,8 +62,16 @@ Discovery  →  Workflow   →  [ Execution ]  →  Model Decision  →  Cost De
 │                            已查證事實／已撤回宣稱／降級路徑 │
 │    openai-compatible.yaml  替代樣板（capabilities=unknown） │
 ├──────────────────────────────────────────────────────────┤
+│  catalog/      ★ 接入層 · 八個 MCP server 的接入契約        │
+│    aitokenking       預設 AI 模型閘道（A9／B5／C0）         │
+│    aws  gcp-cloud-run  azure  railway  vercel  e2b  tidb    │
+│    每支標明 A 唯讀／B 動錢／C 動基礎設施 ＋ 白名單可行性     │
+├──────────────────────────────────────────────────────────┤
 │  docs/         installation.md ／ aitokenking-mcp-service  │
+│                cloud-deployment-mcp.md（開發者入口）        │
 │  scripts/      setup-aitokenking.sh（全域設定＋白名單防呆） │
+│                check_catalog.py（三級分類機器檢核）         │
+│  .mcp.json.example  八個 server 的設定範本                  │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -98,6 +117,8 @@ Discovery  →  Workflow   →  [ Execution ]  →  Model Decision  →  Cost De
 | 1 | **策略先於程式碼** —— 判準寫死在 repo 裡，才准開始寫 server | 這條線最可能的死法是做出一堆沒人呼叫的 MCP。判準是唯一的煞車，它必須先於油門存在 |
 | 2 | **`providers/*.yaml` 是事實的唯一的家**，文件只是產物 | 端點與變數名散在每個檔案裡，改一次要改十處，第十一處就會分岔 |
 | 3 | **上游原文以死快照保存，不與上游同步** | 同步等於把兩個 repo 綁成一個。快照會過期，但**過期是看得見的，分岔不是** |
+| 4 | **接入層用三級分類（A／B／C）而不是兩級** | 帳單可以事後補救，刪掉的正式資料庫不能。合併成一組會讓「花一點錢」和「砍掉生產環境」在設定檔裡長得一模一樣 |
+| 5 | **repo 自己的 `.mcp.json` 只留 AI Token King，八個放 `.example`** | 每個 server 在每次 session 啟動都要連線並載入 schema。把八個設成預設，代價是每個開這個 repo 的人都要付那個成本，而他今天大概只用得到一個 |
 
 ---
 

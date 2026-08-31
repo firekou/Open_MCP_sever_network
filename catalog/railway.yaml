@@ -1,0 +1,80 @@
+# Railway —— 官方 Remote MCP Server（接入契約）
+
+id: railway
+label: Railway
+vendor: Railway
+official: true
+status: ga
+repo: https://github.com/railwayapp/railway-mcp-server
+docs: https://docs.railway.com/reference/mcp-server
+endpoint: https://mcp.railway.com
+
+transport: http         # 亦可經 CLI 走 stdio，見 config_cli
+
+config:
+  railway:
+    type: http
+    url: https://mcp.railway.com
+
+config_cli:
+  # 經 Railway CLI 轉接，重用 railway login 的憑證，不需第二次認證
+  railway:
+    command: railway
+    args:
+      - mcp
+
+install:
+  claude_code_http: claude mcp add railway --transport http https://mcp.railway.com
+  cli_setup: railway setup agent            # CLI 模式
+  cli_setup_oauth: railway setup agent --oauth
+
+auth:
+  method: oauth          # HTTP 模式；CLI 模式重用 railway login
+  env: []
+  notes: >-
+    首次呼叫時 client 會開瀏覽器授權，之後重用憑證。
+    ⚠️ 沒有 API key 環境變數 —— 授權一次之後 agent 就一直有權限，
+    撤銷要去 Railway 後台，不是刪一個環境變數。
+
+safety:
+  read_only_flag: null
+  read_only_alternative: >-
+    沒有唯讀旗標。可用 OAuth 授權時的 workspace／project scoping 縮小範圍，
+    但那是縮小「哪些專案」不是縮小「能做什麼」。
+  allowlist_viable: false
+  allowlist_viable_reason: >-
+    ★ railway-agent 是開放式代理工具 —— 它能做什麼由 prompt 決定，
+    不由工具名決定。把它加進白名單，等於把整個 Railway 帳號加進白名單。
+
+  group_a:
+    - whoami
+    - list-projects
+    - list-services
+    - list-feature-flags
+    - get-feature-flag
+  group_b: []
+  group_c:
+    - create-project
+    - set-feature-flag
+    - delete-feature-flag
+    - redeploy
+    - accept-deploy
+    - railway-agent        # ★ 開放式，風險上限等於帳號權限
+  purchase: false
+  cost_note: 部署出來的服務按用量計費
+
+verified_facts:
+  - fact: 官方端點為 https://mcp.railway.com，走 OAuth；亦可經 railway mcp 由 CLI 重用 railway login 憑證
+    verified_at: "2026-08-31"
+    source: https://docs.railway.com/reference/mcp-server
+    evidence: E2
+  - fact: 工具含 whoami／list-projects／create-project／list-services／feature flag 四支／redeploy／accept-deploy／railway-agent
+    verified_at: "2026-08-31"
+    source: 同上
+    evidence: E2
+
+gaps:
+  - id: RW-1
+    gap: 上列工具清單為文件所載，未與實際 tools/list 逐支比對（可能不完整）
+  - id: RW-2
+    gap: 存在同名的社群非官方實作（jason-tan-swe/railway-mcp）—— 安裝前務必確認來源是 railwayapp

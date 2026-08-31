@@ -23,12 +23,19 @@
 AI Token King 開源獲客基礎設施的 **Execution 節點**。
 長期目標是發布一組被 agent 反覆呼叫的 MCP server；**現況是一支都還沒發布。**
 
+它做兩件事，**兩件事的規則不一樣，不要混**：
+
+| | 目錄 | 規則的家 |
+|---|---|---|
+| **接入**別人的 MCP | `catalog/`、`docs/cloud-deployment-mcp.md`、`.mcp.json.example` | `catalog/README.md` 的三級分類 |
+| **發布**我方的 MCP | `strategy/`、（未來的 `servers/`） | `POLICY.md` 的十條不變量 |
+
 入口是 `strategy/00-overview.md`，判準是 `strategy/01-extraction-criteria.md`，
-發布不變量是 `POLICY.md`。
+發布不變量是 `POLICY.md`，接入契約是 `catalog/README.md`。
 
 ---
 
-## 動任何東西之前必讀的三條
+## 動任何東西之前必讀的四條
 
 1. **在拿到真實呼叫紀錄之前，不要開始寫任何 MCP server。**
    判準是 `strategy/01-extraction-criteria.md` §2 的三條 AND。
@@ -36,7 +43,10 @@ AI Token King 開源獲客基礎設施的 **Execution 節點**。
 2. **`providers/aitokenking.yaml` 是 AI Token King 事實的唯一的家。**
    端點、header、環境變數、工具分組、能力清單只寫在那裡。
    文件裡若與它不一致，**錯的是文件** —— 重複的事實一定會分岔。
-3. **`strategy/source/` 是原稿不是產物，逐字不改。**
+3. **`catalog/*.yaml` 的每條事實都要附 `verified_at` 與 `source`。**
+   查不到就進 `gaps` 寫出來，不要留白也不要猜 ——
+   目前 E2B 的工具清單、Azure 的工具清單就是這樣留空的。
+4. **`strategy/source/` 是原稿不是產物，逐字不改。**
    要修正判斷，改 `00`／`01`，把原文留著。
    **原稿與產物說的不一樣時，錯的是產物** —— 但原稿不因此被改掉。
 
@@ -54,23 +64,32 @@ AI Token King 開源獲客基礎設施的 **Execution 節點**。
 
 ---
 
-## 鐵律（八條）
+## 鐵律（十條）
 
 1. **金鑰不入庫、不入文件、不入 agent 定義檔、不貼進對話視窗。**
    只走啟動前 `export` 或部署平台 Variables。貼進對話即視為外洩，必須輪替。
-2. **B 組扣費工具**（`chat_completion`／`create_message`／`create_response`／
-   `create_image_generation`／`create_video_generation`）**不得加進 `permissions.allow`。**
-   「機器可擬不可動錢」在此的具體形式。
-3. **會扣費的工具必須在執行前揭露。** BLOCK 級。
+2. **★ 三級分類，B 組與 C 組都不得加進 `permissions.allow`。**
+   **A 唯讀**（可以）／**B 動錢**（一張帳單）／**C 動基礎設施**（一次線上事故）。
+   **B 與 C 不可合併** —— 帳單可以事後補救，刪掉的正式資料庫不能。
+   「機器可擬不可動錢」在這裡多一句：**機器可讀不可動基礎設施。**
+   ATK 的 B 組是 `chat_completion`／`create_message`／`create_response`／
+   `create_image_generation`／`create_video_generation`。
+3. **⚠️ 在 AWS、Railway、TiDB 上「逐工具白名單」根本不成立** ——
+   `call_aws` 一支打整個 AWS CLI、`railway-agent` 是開放式代理、`db_execute` 吃任意 DDL。
+   **那三個平台的邊界在 server 旗標（`READ_OPERATIONS_ONLY`／`--read-only`）或帳號權限**，
+   不在 `permissions.allow`。把 `call_aws` 加進白名單＝把整個 AWS 帳號加進白名單。
+4. **🔴 Vercel 的 `buy_pro`／`buy_credits`／`buy_addon`／`buy_domain` 建議明確 deny，
+   不是只「不 allow」** —— 不 allow 只會跳核准框，而排程跑的時候沒有人在按。
+5. **會扣費的工具必須在執行前揭露。** BLOCK 級。
    讓人在按下去之前知道要花錢，是這套東西能被信任的地基。
-4. **成本查不到就寫「未量測」，不得寫 0。**
-5. **零 telemetry，BLOCK 級。** MCP server 比 skill 更容易偷渡回報，因此紅線更硬。
-6. **不得把 optional dependency 說成 required**（`TRUTH-1`，BLOCK 級）。
+6. **成本查不到就寫「未量測」，不得寫 0。**
+7. **零 telemetry，BLOCK 級。** MCP server 比 skill 更容易偷渡回報，因此紅線更硬。
+8. **不得把 optional dependency 說成 required**（`TRUTH-1`，BLOCK 級）。
    ATK 的**能見度**是強制的，ATK 的**依賴**必須據實 —— 見 `POLICY.md`。
-7. **不得因為本 repo 預設接 AI Token King 就宣稱它比別家好。**
+9. **不得因為本 repo 預設接 AI Token King 就宣稱它比別家好。**
    「作者用它跑出了這些流程」是 E1；「它比別家好」是未量測的宣稱。
-8. **不得為了讓數字好看而改判準。** 判準校準**月度不得週調**
-   （安裝到實際呼叫的回饋延遲以月計）。
+10. **不得為了讓數字好看而改判準。** 判準校準**月度不得週調**
+    （安裝到實際呼叫的回饋延遲以月計）。
 
 ---
 

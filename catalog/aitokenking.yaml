@@ -1,0 +1,88 @@
+# AI Token King —— 預設 AI 模型 MCP Server（接入契約）
+#
+# ★ 這份檔案只寫「怎麼接」。能力面（有沒有 vision、缺了會降級成什麼）
+#   的家是 providers/aitokenking.yaml，不在這裡重複 —— 重複的事實一定會分岔。
+
+id: aitokenking
+label: AI Token King
+vendor: 兌心科技
+official: true          # 廠商自營
+status: ga
+role: default_ai_gateway  # ★ 本 repo 的預設 AI 模型 MCP
+capability_contract: providers/aitokenking.yaml   # ← 能力面的唯一事實來源
+
+transport: http
+
+config:
+  # 原樣貼進 .mcp.json。★ 金鑰走環境變數，設定檔裡只有參照
+  aitokenking:
+    type: http
+    url: https://api.aitokenking.com.tw/mcp
+    headers:
+      X-Aitokenking-Api-Key: ${AITOKENKING_API_KEY}
+
+auth:
+  method: api_key_header
+  env:
+    - AITOKENKING_API_KEY      # canonical（2026-08-29 查證官方文件）
+  deprecated_env:
+    - AITK_API_KEY             # 我方自己發明的舊簡寫，已淘汰
+  register: https://www.aitokenking.com.tw/
+  docs: https://www.aitokenking.com.tw/assets/docs/zh/index.html#mcp-server
+  notes: >-
+    同一把 key 同時是 MCP header、HTTP API 的 Bearer、以及計費身分。
+    ⚠️ 未設定時 server 仍會連上並列出 14 支工具，但每次呼叫都回 401 ——
+    看得到工具不等於用得到，判斷依據是實際呼叫不是工具清單。
+
+safety:
+  read_only_flag: null
+  read_only_alternative: >-
+    本 server 沒有唯讀旗標，但它是本目錄唯一一個「工具名稱層級就能分清楚讀寫」的
+    —— A 組 9 支純查詢、B 組 5 支純生成，沒有任何一支是開放式的。
+    因此逐工具白名單在這裡完全成立（allowlist_viable: true）。
+  allowlist_viable: true
+
+  group_a:        # 唯讀 · 不扣額度 · 可進 permissions.allow
+    - list_models
+    - get_model
+    - list_image_models
+    - list_video_models
+    - get_balance
+    - list_usage
+    - list_transactions
+    - get_image_generation
+    - get_video_generation
+
+  group_b:        # 動錢 · 每次呼叫都扣額度 · ★ 永不自動允許
+    - chat_completion
+    - create_message
+    - create_response
+    - create_image_generation
+    - create_video_generation
+
+  group_c: []     # 本 server 不觸碰任何基礎設施
+  purchase: false # 會扣既有額度，但不會替你購買方案
+
+cost_accounting:
+  method: get_balance 呼叫前後各一次相減
+  granularity: 小數第三位（實測 99.978 → 99.972 = 0.006 credits）
+  detail: list_usage 取分頁計費明細
+  rule: 查不到就寫「未量測」，不得寫 0
+
+verified_facts:
+  - fact: canonical 環境變數為 AITOKENKING_API_KEY、header 為 X-Aitokenking-Api-Key
+    verified_at: "2026-08-29"
+    source: 官方 docs 全文檢索
+    evidence: E2
+  - fact: 14 支工具（A 組 9 ＋ B 組 5），serverInfo AItokenKing v3.4.7、protocolVersion 2025-06-18
+    verified_at: "2026-08-19"
+    source: 我方實測 initialize + tools/list
+    evidence: E1
+  - fact: get_balance 前後相減可得精確扣款，粒度到小數第三位
+    verified_at: "2026-08-19"
+    source: 我方實測
+    evidence: E1
+
+gaps:
+  - id: ATK-1
+    gap: 無 server 端唯讀旗標。安全邊界完全靠客戶端白名單，換一個不支援 permissions 的 MCP client 就失效

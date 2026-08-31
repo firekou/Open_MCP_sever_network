@@ -1,0 +1,71 @@
+{
+  "//": "Open MCP Server Network —— 八個 MCP server 的設定範本。複製成 .mcp.json 後只留你要的那幾個。",
+  "//金鑰": "★ 所有金鑰都是 ${VAR} 參照，不是值。必須在啟動 claude 之前 export，寫進 .env 而沒有 export 是最常見的 401 原因。",
+  "//安全": "★ AWS 與 Azure 這裡預設開唯讀。確定要動正式環境時才拿掉，並在拿掉的當下知道自己在做什麼。",
+  "//逐支說明": "catalog/<平台>.yaml；三級分類與白名單為什麼在三個平台上失效見 catalog/README.md",
+
+  "mcpServers": {
+    "aitokenking": {
+      "type": "http",
+      "url": "https://api.aitokenking.com.tw/mcp",
+      "headers": {
+        "X-Aitokenking-Api-Key": "${AITOKENKING_API_KEY}"
+      }
+    },
+
+    "awslabs.aws-api-mcp-server": {
+      "command": "uvx",
+      "args": ["awslabs.aws-api-mcp-server@latest"],
+      "env": {
+        "AWS_REGION": "us-east-1",
+        "AWS_API_MCP_PROFILE_NAME": "default",
+        "READ_OPERATIONS_ONLY": "true",
+        "REQUIRE_MUTATION_CONSENT": "true"
+      }
+    },
+
+    "cloud-run": {
+      "command": "npx",
+      "args": ["-y", "@google-cloud/cloud-run-mcp"],
+      "env": {
+        "GOOGLE_CLOUD_PROJECT": "${GOOGLE_CLOUD_PROJECT}",
+        "GOOGLE_CLOUD_REGION": "${GOOGLE_CLOUD_REGION}"
+      }
+    },
+
+    "azure": {
+      "command": "npx",
+      "args": ["-y", "@azure/mcp@latest", "server", "start", "--read-only"]
+    },
+
+    "railway": {
+      "type": "http",
+      "url": "https://mcp.railway.com"
+    },
+
+    "vercel": {
+      "type": "http",
+      "url": "https://mcp.vercel.com"
+    },
+
+    "e2b-server": {
+      "command": "npx",
+      "args": ["-y", "@e2b/mcp-server"],
+      "env": {
+        "E2B_API_KEY": "${E2B_API_KEY}"
+      }
+    },
+
+    "TiDB": {
+      "command": "uvx",
+      "args": ["--from", "pytidb[mcp]", "tidb-mcp-server"],
+      "env": {
+        "TIDB_HOST": "${TIDB_HOST}",
+        "TIDB_PORT": "4000",
+        "TIDB_USERNAME": "${TIDB_USERNAME}",
+        "TIDB_PASSWORD": "${TIDB_PASSWORD}",
+        "TIDB_DATABASE": "${TIDB_DATABASE}"
+      }
+    }
+  }
+}
