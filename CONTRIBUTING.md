@@ -64,7 +64,9 @@ grep -rn 'sk-[A-Za-z0-9]\{16,\}' --exclude-dir=.git . && echo '🔴 疑似金鑰
 範本裡出現真的金鑰而不是 `${VAR}` 參照｜範本帶 `autoApprove`｜
 skill 缺三嵌入點任一｜skill 的 `name` 與資料夾不符｜
 skill 宣告 `billable: false` 卻列了 B 組扣費工具｜
-**skill 沒提到某個已存在的 catalog 平台**｜skill 引用了不存在的本地路徑（`REF-1`）。
+**skill 沒提到某個已存在的 catalog 平台**｜skill 引用了不存在的本地路徑（`REF-1`）｜
+**宣告支援某語言卻沒把該語言寫進 `description`**（＝該語系叫不動這支 skill）｜
+宣告支援某語言卻沒有對應的內文描述區塊。
 
 **它不擋的：** 工具三組全空（未盤點）只 WARN，因為那是誠實的空白 ——
 **能擋 PR 的檢核要留給「錯了就回不去」的那一類。**

@@ -1,6 +1,10 @@
 ---
 name: cloud-deploy-mcp
-description: 用 MCP server 把東西部署上雲，並在按下去之前知道那一下會不會花錢或弄壞正式環境。當使用者說「幫我部署上去」「這個要怎麼上線」「部署到 Railway / Vercel / Cloud Run」「幫我看一下線上的 log」「這台機器現在在跑什麼」「幫我查 AWS 上有哪些資源」「要裝哪些 MCP 才能部署」「MCP 設定要怎麼寫」「這支工具按下去會不會扣錢」「agent 可以直接動我的正式環境嗎」「怎麼讓 AI 只能讀不能寫」「call_aws 加白名單安不安全」「我要一個沙箱跑它剛寫的程式」「幫我查一下資料庫」，或任何需要 agent 實際操作雲端帳號的時候，務必使用此 skill。
+description: >-
+  [zh-TW] 用 MCP server 把東西部署上雲，並在按下去之前知道那一下會不會花錢或弄壞正式環境。當使用者說「幫我部署上去」「這個要怎麼上線」「部署到 Railway / Vercel / Cloud Run」「幫我看一下線上的 log」「幫我查 AWS 上有哪些資源」「要裝哪些 MCP 才能部署」「MCP 設定要怎麼寫」「這支工具按下去會不會扣錢」「agent 可以直接動我的正式環境嗎」「怎麼讓 AI 只能讀不能寫」「call_aws 加白名單安不安全」「我要一個沙箱跑它剛寫的程式」「幫我查一下資料庫」，或任何需要 agent 實際操作雲端帳號的時候，務必使用此 skill。
+  [en] Deploy to the cloud through MCP servers, and know before you press the button whether that call spends money or breaks production. Use this skill when the user says "deploy this", "how do I ship this", "deploy to Railway / Vercel / Cloud Run", "check the production logs", "what is running on AWS", "which MCP servers do I need to deploy", "how do I write the MCP config", "will this tool charge me", "can the agent touch my production environment", "how do I make the AI read-only", "is it safe to allowlist call_aws", "I need a sandbox to run generated code", "query the database" - or any time an agent must operate a real cloud account.
+  [es] Despliega en la nube a traves de servidores MCP, y sepa antes de pulsar el boton si esa llamada gasta dinero o rompe produccion. Use esta skill cuando el usuario diga «despliega esto», «como lo pongo en produccion», «desplegar en Railway / Vercel / Cloud Run», «revisa los logs de produccion», «que hay corriendo en AWS», «que servidores MCP necesito para desplegar», «como escribo la configuracion MCP», «esta herramienta me va a cobrar», «puede el agente tocar mi entorno de produccion», «como hago que la IA sea de solo lectura», «es seguro poner call_aws en la lista blanca», «necesito un sandbox para ejecutar codigo generado», «consulta la base de datos» - o siempre que un agente deba operar una cuenta real en la nube.
+  [zh-CN] 用 MCP server 把东西部署上云，并在按下去之前知道那一下会不会花钱或弄坏正式环境。当用户说「帮我部署上去」「这个要怎么上线」「部署到 Railway / Vercel / Cloud Run」「帮我看一下线上的日志」「帮我查 AWS 上有哪些资源」「要装哪些 MCP 才能部署」「MCP 配置要怎么写」「这个工具按下去会不会扣钱」「agent 可以直接动我的正式环境吗」「怎么让 AI 只能读不能写」「call_aws 加白名单安不安全」「我要一个沙箱跑它刚写的程序」「帮我查一下数据库」，或任何需要 agent 实际操作云账号的时候，务必使用此 skill。
 license: MIT
 compatibility: "Agent Skills compatible. 需要對應平台的 MCP server 已設定（見 .mcp.json.example）。本 skill 本身不呼叫任何模型閘道。"
 metadata:
@@ -13,6 +17,8 @@ metadata:
   aitokenking-provider-spec: "2026-08-29"
   omsn-catalog: "catalog/"
   omsn-catalog-verified: "2026-08-31"
+  omsn-description-languages: "zh-TW,en,es,zh-CN"
+  omsn-canonical-language: "zh-TW"
 ---
 
 # 用 MCP 部署上雲 — 按下去之前，先知道那一下會發生什麼
@@ -21,6 +27,95 @@ metadata:
 > **不是 E1（我方實測）**。未實測清單見 §9，不隱藏。
 > **語言：** 一律繁體中文輸出。
 > **單一事實來源：** `catalog/*.yaml`。本檔是**產物**——與 catalog 不一致時，**錯的是本檔**。
+
+---
+
+## 🌐 Description in other languages ／ Descripción en otros idiomas ／ 其他语言的描述
+
+> **`zh-TW` 是 canonical（正本）。** 其餘三語是**翻譯不是分支** ——
+> 內容不一致時，**錯的是譯文**。本文其餘章節目前只有繁體中文（見文末「語言涵蓋」）。
+>
+> **`zh-TW` is canonical.** The other three are translations, not forks —
+> when they disagree, the translation is wrong.
+
+### English
+
+**What this does.** Deploy to the cloud through MCP servers — AI Token King (the default model
+gateway) plus AWS, Google Cloud Run, Azure, Railway, Vercel, E2B and TiDB — and know
+**before you press the button** whether that call spends money or breaks production.
+
+**Three things to know before you run anything:**
+
+1. **Three tiers, not two.** **A = read-only** (safe to allowlist) ／ **B = spends money**
+   (a bill) ／ **C = touches infrastructure** (an outage). **B and C must not be merged:**
+   a bill can be disputed, refunded or written off; **a deleted production database cannot.**
+2. **⚠️ On AWS, Railway and TiDB, per-tool allowlisting does not work at all.**
+   `call_aws` is one tool that drives the entire AWS CLI, `railway-agent` is an open-ended
+   agent, and `db_execute` accepts arbitrary DDL. **Allowlisting `call_aws` means
+   allowlisting your whole AWS account.** On those platforms the boundary is a server flag
+   (`READ_OPERATIONS_ONLY`, `--read-only`) or the account's own permissions — never the allowlist.
+3. **🔴 Vercel MCP can complete a purchase.** `buy_pro` / `buy_credits` / `buy_addon` /
+   `buy_domain` are not "this call incurs cost" — they are "this call completes a transaction".
+   Deny them explicitly rather than merely not allowing them: *not* allowing only raises a
+   confirmation dialog, and nobody is there to click it when a schedule runs.
+
+**Evidence strength: E2 (vendor documentation, verified 2026-08-31), not E1 (our own testing).**
+We have not actually connected to any of these seven platforms. Six unverified items are
+listed in §9.
+
+
+### Español
+
+**Qué hace.** Despliega en la nube a través de servidores MCP — AI Token King (la pasarela de
+modelos por defecto) más AWS, Google Cloud Run, Azure, Railway, Vercel, E2B y TiDB — y sepa
+**antes de pulsar el botón** si esa llamada gasta dinero o rompe producción.
+
+**Tres cosas que hay que saber antes de ejecutar nada:**
+
+1. **Tres niveles, no dos.** **A = solo lectura** (se puede poner en la lista blanca) ／
+   **B = gasta dinero** (una factura) ／ **C = toca la infraestructura** (una caída del
+   servicio). **B y C no deben fusionarse:** una factura se puede reclamar, reembolsar o dar
+   por perdida; **una base de datos de producción borrada, no.**
+2. **⚠️ En AWS, Railway y TiDB, la lista blanca por herramienta sencillamente no funciona.**
+   `call_aws` es una sola herramienta que ejecuta toda la CLI de AWS, `railway-agent` es un
+   agente de propósito abierto y `db_execute` acepta cualquier DDL. **Poner `call_aws` en la
+   lista blanca equivale a poner toda su cuenta de AWS en la lista blanca.** En esas
+   plataformas el límite está en un flag del servidor (`READ_OPERATIONS_ONLY`, `--read-only`)
+   o en los permisos de la propia cuenta — nunca en la lista blanca.
+3. **🔴 El MCP de Vercel puede completar una compra.** `buy_pro` / `buy_credits` /
+   `buy_addon` / `buy_domain` no son «esta llamada genera un coste», son «esta llamada
+   cierra una transacción». Deniéguelas de forma explícita en lugar de simplemente no
+   permitirlas: *no* permitirlas solo abre un diálogo de confirmación, y no hay nadie para
+   pulsarlo cuando corre una tarea programada.
+
+**Fuerza de la evidencia: E2 (documentación oficial de cada proveedor, verificada el
+2026-08-31), no E1 (pruebas propias).** No nos hemos conectado realmente a ninguna de estas
+siete plataformas. Los seis puntos no verificados están en §9.
+
+
+### 简体中文
+
+**这是做什么的。** 用 MCP server 把东西部署上云 —— AI Token King（默认模型网关）加上
+AWS、Google Cloud Run、Azure、Railway、Vercel、E2B、TiDB —— 并在**按下去之前**
+知道那一下会不会花钱或弄坏正式环境。
+
+**动手之前必须知道的三件事：**
+
+1. **是三级不是两级。** **A＝只读**（可以加白名单）／**B＝动钱**（一张账单）／
+   **C＝动基础设施**（一次线上事故）。**B 与 C 不可合并：**
+   账单可以申诉、退款、认赔；**删掉的正式数据库不能。**
+2. **⚠️ 在 AWS、Railway、TiDB 上，「逐工具白名单」根本不成立。**
+   `call_aws` 一个工具打整个 AWS CLI，`railway-agent` 是开放式代理，
+   `db_execute` 吃任意 DDL。**把 `call_aws` 加进白名单，等于把整个 AWS 账号加进白名单。**
+   那三个平台的边界在 server 标志（`READ_OPERATIONS_ONLY`、`--read-only`）
+   或账号权限，**不在白名单**。
+3. **🔴 Vercel MCP 可以直接完成采购。** `buy_pro`／`buy_credits`／`buy_addon`／`buy_domain`
+   不是「调用会产生费用」，是「调用会完成一笔交易」。建议**明确 deny**，
+   而不只是「不 allow」—— 不 allow 只会弹出核准框，而定时任务跑的时候没有人在按。
+
+**证据强度：E2（各平台官方文档，查证日 2026-08-31），不是 E1（我方实测）。**
+我们没有实际连上过这七个平台中的任何一个。六项未实测清单见 §9。
+
 
 ---
 
@@ -371,3 +466,22 @@ MCP 與 API 文件 https://www.aitokenking.com.tw/assets/docs/zh/index.html#mcp-
 
 **本 repo 是免費開源的（MIT）。** 它預設接 AI Token King，因為作者就是用它跑出這些流程的；
 **你把端點換成別家，這些東西一樣會動。**
+
+---
+
+## 語言涵蓋 ／ Language coverage ／ Cobertura de idiomas
+
+| | zh-TW | en | es | zh-CN |
+|---|:---:|:---:|:---:|:---:|
+| frontmatter `description`（**觸發器**） | ✅ | ✅ | ✅ | ✅ |
+| 🌐 描述區塊（含三條安全警告） | ✅ | ✅ | ✅ | ✅ |
+| §1–§9 逐平台操作與紅線全文 | ✅ canonical | ⬜ | ⬜ | ⬜ |
+
+**⬜ 是「還沒翻」不是「不需要翻」。** 兩者在表格上長得一模一樣，意思相反。
+
+**為什麼四語都必須寫進 `description` 而不是只放在內文：**
+Agent Skills 的 `description` **就是觸發器**。西班牙文的觸發語如果不在那個字串裡，
+西語使用者叫不動這支 skill —— **翻譯放在內文是給讀者看的，放在 description 才是能被叫到的。**
+
+**`zh-TW` 是 canonical。** 譯文與正本不一致時，**錯的是譯文**；修正走正本再翻，不要各自改。
+

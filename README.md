@@ -91,7 +91,7 @@ call_aws 加進白名單安不安全？
 
 | 路徑 | 內容 |
 |---|---|
-| [`skills/cloud-deploy-mcp/`](skills/cloud-deploy-mcp/SKILL.md) | **★ 可執行的 skill。** 路線判定器 ＋ 逐平台操作 ＋ 部署前檢查清單 ＋ 出事了怎麼辦 |
+| [`skills/cloud-deploy-mcp/`](skills/cloud-deploy-mcp/SKILL.md) | **★ 可執行的 skill。** 路線判定器 ＋ 逐平台操作 ＋ 部署前檢查清單 ＋ 出事了怎麼辦。**描述四語：`zh-TW`（canonical）／`en`／`es`／`zh-CN`** |
 | [`catalog/README.md`](catalog/README.md) | **MCP server 目錄。** 八個平台的接入契約 ＋ **A／B／C 三級分類** ＋ 白名單在哪三個平台失效 |
 | [`catalog/*.yaml`](catalog/) | 逐平台：設定區塊、認證、工具三級分類、已查證事實、缺口 |
 | [`docs/cloud-deployment-mcp.md`](docs/cloud-deployment-mcp.md) | **開發者入口。** 把八個接起來、怎麼不出事、七個平台各適合什麼 |
@@ -144,6 +144,23 @@ export AITOKENKING_API_KEY='<該端點的 key>'
 
 **缺哪個能力，對應步驟就降級哪一步**，逐項見 `providers/aitokenking.yaml` 的 `degradation`。
 **我們把話講在前面，是因為一支要騙你才留得住你的工具不值得你留著。**
+
+---
+
+## 🌐 語言 ／ Languages ／ Idiomas
+
+`cloud-deploy-mcp` 的**描述**有四種語言：**繁體中文（canonical）／English／Español／简体中文**，
+四種都寫在 frontmatter 的 `description` 裡。
+
+**為什麼一定要寫進 `description` 而不是只放在內文：**
+Agent Skills 的 `description` **就是觸發器**。西班牙文的觸發語如果不在那個字串裡，
+西語使用者叫不動這支 skill —— **放在內文是給讀者看的，放在 `description` 才是能被叫到的。**
+
+每一語的描述都帶著同樣的三條安全警告（三級分類／白名單在三個平台失效／Vercel 可直接刷卡），
+**因為把安全警語留在別種語言裡，等於沒有寫。**
+
+⬜ **逐平台操作與紅線全文目前只有繁體中文**，涵蓋表印在 skill 檔尾 ——
+**「還沒翻」與「不需要翻」在表格上長得一模一樣，意思相反。**
 
 ---
 

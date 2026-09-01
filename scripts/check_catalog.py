@@ -140,6 +140,13 @@ ATK_BILLABLE = {
     "chat_completion", "create_message", "create_response",
     "create_image_generation", "create_video_generation",
 }
+# 語言標籤 → 內文區塊標題。改這裡就等於改契約。
+LANG_HEADINGS = {
+    "zh-TW": None,          # canonical，內文本身即是
+    "en": "### English",
+    "es": "### Español",
+    "zh-CN": "### 简体中文",
+}
 EMBED_POINTS = [
     ("metadata:", "嵌入點① frontmatter metadata"),
     ("## §0 · 執行前置", "嵌入點② §0 執行前置"),
@@ -189,6 +196,31 @@ def check_skills(catalog_ids):
         if billable == "false" and leaked:
             err(name, f"billable 宣告 false 卻列了 B 組扣費工具 {sorted(leaked)}"
                       " —— 宣告與事實不符，而扣費警示是這套東西的信任地基")
+
+        # ③b ★ 國際化：宣告了幾種語言，那幾種就必須真的在 description 裡
+        #      description 是觸發器 —— 譯文只放內文，該語系的使用者根本叫不動這支 skill
+        langs_line = None
+        for line in body.splitlines()[:45]:
+            s = line.strip()
+            if s.startswith("omsn-description-languages:"):
+                langs_line = s.split(":", 1)[1].strip().strip('"')
+        if langs_line:
+            langs = [x.strip() for x in langs_line.split(",") if x.strip()]
+            try:
+                fm = yaml.safe_load(body.split("---")[1])
+                desc = fm.get("description", "")
+            except Exception:
+                desc = ""
+            for lang in langs:
+                if f"[{lang}]" not in desc:
+                    err(name, f"宣告支援 {lang} 但 description 內沒有 [{lang}] 段"
+                              " —— description 就是觸發器，譯文只放內文等於該語系叫不動這支 skill")
+                heading = LANG_HEADINGS.get(lang, f"### {lang}")
+                if heading and heading not in body:
+                    err(name, f"宣告支援 {lang} 但內文缺 `{heading}` 描述區塊")
+            unknown = [l for l in langs if l not in LANG_HEADINGS]
+            if unknown:
+                warn(name, f"宣告了 LANG_HEADINGS 未登記的語言 {unknown} —— 檢核器只驗得到已登記的")
 
         # ④ ★ 產物不得落後於原稿：每個 catalog 平台都要在 skill 裡出現
         missing = [cid for cid in catalog_ids if cid not in body]
